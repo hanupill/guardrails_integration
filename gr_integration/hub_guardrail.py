@@ -1,6 +1,7 @@
+# Top of file imports
 import logging
 from typing import Dict, Any
-from agents.dto import CoreAgentContext
+from .dto import CoreAgentContext
 from .base_guardrail import Guardrail
 
 HUB_ID_MAP = {
@@ -32,12 +33,6 @@ def _infer_type_from_hub_id(hub_id: str) -> str:
 
 
 class HubGuardrail(Guardrail):
-    """Guardrails Hub-based guardrail.
-
-    Executes a configured Hub validator from `hub_id` and emits violations.
-    Detection-only; does not modify input.
-    """
-
     def validate(self, context: CoreAgentContext, user_input: str) -> str:
         self._emit_start(context, user_input)
         hub_id = getattr(self.config, "hub_id", None) or ""
@@ -102,12 +97,24 @@ class HubGuardrail(Guardrail):
                 **({"pattern": pattern} if validator_type == "regex" else {}),
                 **(params or {}),
             }
+            logging.getLogger(__name__).info(
+                "HubGuardrail: prepared validator_cfg summary type=%s hub_id=%s scope=%s on_fail=%s keys=%s",
+                validator_cfg.get("type"),
+                validator_cfg.get("hub_id") or "(none)",
+                validator_cfg.get("scope"),
+                validator_cfg.get("on_fail"),
+                sorted([k for k in validator_cfg.keys() if k not in {"type","scope","hub_id","on_fail"}])
+            )
             _, hub_details = hub.run(user_input, [validator_cfg], scope=scope_str)
 
             if isinstance(hub_details, dict):
                 for k, v in hub_details.items():
                     details[k] = v
-
+                logging.getLogger(__name__).info(
+                    "HubGuardrail: result valid=%s violations_count=%d",
+                    bool(details.get("valid", True)),
+                    len(details.get("violations", []) or [])
+                )
         except Exception as e:
             details["error"] = f"hub_integration_error: {e}"
 

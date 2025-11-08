@@ -1,9 +1,10 @@
+# Top of file imports
 import logging
 import re
 from typing import List, Dict
 
-from agents.dto import CoreAgentContext
-from .base_guardrail import Guardrail
+from .dto import CoreAgentContext
+from .base_guardrail import Guardrail, GuardrailConfig
 
 
 def _parse_words(prompt: str) -> List[str]:

@@ -1,5 +1,5 @@
 from typing import List
-from agents.dto import AgentGuardrail, GuardrailsScope
+from .dto import AgentGuardrail, GuardrailsScope
 from .hub_adapter import GuardrailsHubAdapter
 
 class GuardrailsApiService:
@@ -15,6 +15,11 @@ class GuardrailsApiService:
         # Then, optionally apply Hub validators if available, based on guardrail config
         from .hub_adapter import GuardrailsHubAdapter
         hub = GuardrailsHubAdapter()
+        import logging
+        logging.getLogger(__name__).info(
+            "GuardrailsApiService: hub availability is_available=%s has_validate=%s",
+            hub.is_available(), hub.has_validate()
+        )
         if not hub.is_available() or not hub.has_validate():
             return processed_text
 
@@ -50,7 +55,21 @@ class GuardrailsApiService:
 
             validators_config.append(v)
 
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "GuardrailsApiService: prepared hub validators count=%d scope=%s hub_ids=%s",
+            len(validators_config),
+            scope_str,
+            [v.get("hub_id") for v in validators_config if v.get("hub_id")]
+        )
+
+        logger.info("GuardrailsApiService: invoking hub.run with %d validators", len(validators_config))
         sanitized_text, _details = hub.run(text or "", validators_config=validators_config, scope=scope_str)
+        logger.info(
+            "GuardrailsApiService: hub.run returned details keys=%s",
+            list((_details or {}).keys())
+        )
 
         # If hub reports violations, raise to caller with details
         is_valid = True

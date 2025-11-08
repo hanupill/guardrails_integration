@@ -1,17 +1,25 @@
+# Top of file imports
+import logging
 from typing import Optional
 
-from agents.dto import AgentGuardrail, CoreAgentContext
-from events.agent_event_spec import AgentEventSpec
-from events.event_util import EventUtil
+# Module imports and event stubs
+from .dto import AgentGuardrail, CoreAgentContext
+try:
+    from events.agent_event_spec import AgentEventSpec
+    from events.event_util import EventUtil
+except Exception:
+    class AgentEventSpec:
+        class EventType:
+            on_guardrail_validate_start = "on_guardrail_validate_start"
+            on_guardrail_validate_end = "on_guardrail_validate_end"
 
+    class EventUtil:
+        @staticmethod
+        def emit(event_type, session_id=None, event_params=None):
+            # No-op when events system is not present
+            return
 
 class Guardrail:
-    """Base Guardrail template.
-
-    Subclasses should override validate to implement specific behavior.
-    This base emits start/end events around validation.
-    """
-
     def __init__(self, config: AgentGuardrail) -> None:
         self.config = config
 
@@ -65,3 +73,6 @@ class Guardrail:
         result = user_input
         self._emit_end(context, user_input, result, details={"action": "none"})
         return result
+
+# Provide GuardrailConfig for modules that import it
+GuardrailConfig = AgentGuardrail

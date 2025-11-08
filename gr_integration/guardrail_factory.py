@@ -1,6 +1,6 @@
 import importlib
 from typing import Dict, Type, Optional, Union
-from agents.dto import AgentGuardrail, GuardrailsType
+from .dto import AgentGuardrail, GuardrailsType
 from .base_guardrail import Guardrail
 from .blocklist_guardrail import BlocklistGuardrail
 from .hub_guardrail import HubGuardrail
